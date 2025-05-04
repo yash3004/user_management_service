@@ -1,0 +1,10 @@
+bind:
+  http: 8080
+  grpc: 6500
+
+database:
+  host: localhost
+  port: 3306
+  username: yash
+  password: yash123
+  database: user_management_db
