@@ -5,6 +5,11 @@ bind:
 database:
   host: localhost
   port: 3306
-  username: yash
-  password: yash123
+  username: root
+  password: yash
   database: user_management_db
+
+instrument:
+  enabled: false
+  collector_address: 172.26.4.70:4318
+  

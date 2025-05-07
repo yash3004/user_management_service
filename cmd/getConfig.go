@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 	"k8s.io/klog/v2"
@@ -12,6 +13,13 @@ import (
 type Config struct {
 	Bind BindOptions      `yaml:"bind"`
 	DB   DBConfigurations `yaml:"database"`
+	Instrument InstrumentConfiguration `yaml:"intrument"`
+}
+
+type InstrumentConfiguration struct {
+	Enabled          bool          `yaml:"enabled"`
+	CollectorAddress string        `yaml:"collector_address"`
+	Timeout          time.Duration `yaml:"timeout"`
 }
 
 type BindOptions struct {
