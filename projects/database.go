@@ -1,4 +1,4 @@
-package executor
+package projects
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ func (ps *ProjectService) CreateProject(project *schemas.Project) error {
 		return err
 	}
 
-	if err := ps.CreateProjectTable(project.UniqueID, tx); err != nil {
+	if err := ps.CreateUserProjectTable(project.UniqueID, tx); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -30,7 +30,7 @@ func (ps *ProjectService) CreateProject(project *schemas.Project) error {
 	return tx.Commit().Error
 }
 
-func (ps *ProjectService) CreateProjectTable(projectID string, tx *gorm.DB) error {
+func (ps *ProjectService) CreateUserProjectTable(projectID string, tx *gorm.DB) error {
 	db := ps.DB
 	if tx != nil {
 		db = tx
