@@ -1,27 +1,27 @@
-package usermanagementservice
+package allManager
 
 import (
-	"context"
-
-	"github.com/google/uuid"
+	"github.com/yash3004/user_management_service/policies"
+	"github.com/yash3004/user_management_service/projects"
+	"github.com/yash3004/user_management_service/roles"
+	"github.com/yash3004/user_management_service/users"
+	"gorm.io/gorm"
 )
 
-type User struct{
-	UserId uuid.UUID
-	UserName string
-	Email string
-
+// Managers holds all the service managers
+type Managers struct {
+	UserManager    users.UserManager
+	ProjectManager projects.ProjectManager
+	RoleManager    roles.RoleManager
+	PolicyManager  policies.PolicyManager
 }
 
-type UserManager interface {
-	GetUserByID(ctx context.Context,ProjectId uuid.UUID,UserID uuid.UUID)(User,error)
-}
-
-type ProjectManager interface {
-}
-
-type PoliciesManager interface {
-}
-
-type RolesManger interface {
+// NewManagers creates a new instance of all managers
+func NewManagers(db *gorm.DB) *Managers {
+	return &Managers{
+		UserManager:    users.NewManager(db),
+		ProjectManager: projects.NewManager(db),
+		RoleManager:    roles.NewManager(db),
+		PolicyManager:  policies.NewManager(db),
+	}
 }
