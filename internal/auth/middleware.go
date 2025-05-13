@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/yash3004/user_management_service/internal/schemas"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
@@ -127,15 +126,3 @@ func PolicyMiddleware(db *gorm.DB, resource string, action string) func(http.Han
 	}
 }
 
-// ValidateToken validates the JWT token and returns the user ID
-func ValidateToken(tokenString string) (uuid.UUID, error) {
-	// This is a placeholder for actual JWT validation
-	// In a real implementation, you would:
-	// 1. Parse the JWT token
-	// 2. Verify the signature
-	// 3. Check if the token is expired
-	// 4. Extract and return the user ID from the token claims
-	
-	// For now, we'll return an error to indicate this needs to be implemented
-	return uuid.Nil, errors.New("token validation not implemented")
-}

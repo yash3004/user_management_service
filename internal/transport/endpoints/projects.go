@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/yash3004/user_management_service/projects"
-	"k8s.io/klog/v2"
+	"gorm.io/gorm"
 )
 
 // Project represents a project in the response
@@ -221,4 +221,49 @@ func (e *ProjectsEndpoint) DeleteProject(ctx context.Context, request interface{
 	return DeleteProjectResponse{
 		Success: true,
 	}, nil
+}
+
+
+// CreateProjectUserTable creates a new user table for a project
+func CreateProjectUserTable(db *gorm.DB, projectID string) error {
+	// Define the project user table structure
+	type ProjectUser struct {
+		ID        uuid.UUID `gorm:"type:char(36);primary_key"`
+		Email     string    `gorm:"uniqueIndex"`
+		Password  string    `gorm:"size:255"` // Hashed password for local auth
+		FirstName string    `gorm:"size:100"`
+		LastName  string    `gorm:"size:100"`
+		Active    bool      `gorm:"default:true"`
+
+		// OAuth related fields
+		OAuthID      string `gorm:"size:100;index"` // ID from OAuth provider
+		OAuthType    string `gorm:"size:50"`        // "google", "github", etc.
+		AccessToken  string `gorm:"size:4000"`      // OAuth access token
+		RefreshToken string `gorm:"size:4000"`      // OAuth refresh token
+		TokenExpiry  time.Time
+
+		CreatedAt time.Time
+		UpdatedAt time.Time
+		DeletedAt gorm.DeletedAt `gorm:"index"`
+
+		// Relationships
+		RoleId    uuid.UUID `gorm:"type:char(36);not null;"`
+		ProjectId uuid.UUID `gorm:"type:char(36);not null"`
+	}
+
+	// Create the table with project-specific name
+	tableName := "project_" + projectID + "_users"
+	
+	// Check if table already exists
+	if db.Migrator().HasTable(tableName) {
+		return errors.New("project user table already exists")
+	}
+	
+	// Create the table
+	err := db.Table(tableName).Migrator().CreateTable(&ProjectUser{})
+	if err != nil {
+		return err
+	}
+	
+	return nil
 }

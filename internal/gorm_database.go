@@ -20,15 +20,14 @@ func CreateMySqlConnection(cfg cmd.Config) (*sql.DB, error) {
 		klog.Fatalf("Failed to connect to the database: %v", err)
 		return nil, err
 	}
-	
+
 	// Store the GORM DB instance for later use
 	gormDBInstance = db
-	
+
 	// Auto migrate schemas
 	db.AutoMigrate(&schemas.Role{})
 	db.AutoMigrate(&schemas.Policy{})
 	db.AutoMigrate(&schemas.Project{})
-	db.AutoMigrate(&schemas.User{}) // Make sure to migrate User schema as well
 
 	return db.DB()
 }
@@ -38,7 +37,7 @@ func GetGormDB(cfg cmd.Config) (*gorm.DB, error) {
 	if gormDBInstance != nil {
 		return gormDBInstance, nil
 	}
-	
+
 	// If the instance doesn't exist, create a new connection
 	dsn := cfg.DB.CreateDSN()
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -46,7 +45,10 @@ func GetGormDB(cfg cmd.Config) (*gorm.DB, error) {
 		klog.Errorf("Failed to connect to the database: %v", err)
 		return nil, err
 	}
-	
+	db.AutoMigrate(&schemas.Role{})
+	db.AutoMigrate(&schemas.Policy{})
+	db.AutoMigrate(&schemas.Project{})
+
 	gormDBInstance = db
 	return db, nil
 }

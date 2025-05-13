@@ -12,4 +12,38 @@ database:
 instrument:
   enabled: false
   collector_address: 172.26.4.70:4318
+
+auth:
+  username: admin
+  password: admin123
+
+oauth:
+  google:
+    client_id: your-google-client-id
+    client_secret: your-google-client-secret
+    redirect_url: http://localhost:8080/api/users/oauth/callback/google
+    scopes:
+      - https://www.googleapis.com/auth/userinfo.email
+      - https://www.googleapis.com/auth/userinfo.profile
+  facebook:
+    client_id: your-facebook-client-id
+    client_secret: your-facebook-client-secret
+    redirect_url: http://localhost:8080/api/users/oauth/callback/facebook
+    scopes:
+      - email
+      - public_profile
+  github:
+    client_id: your-github-client-id
+    client_secret: your-github-client-secret
+    redirect_url: http://localhost:8080/api/users/oauth/callback/github
+    scopes:
+      - user:email
+      - read:user
+  microsoft:
+    client_id: your-microsoft-client-id
+    client_secret: your-microsoft-client-secret
+    redirect_url: http://localhost:8080/api/users/oauth/callback/microsoft
+    scopes:
+      - user.read
+      - email
   

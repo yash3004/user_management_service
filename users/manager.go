@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/yash3004/user_management_service/auth/oauth"
+	"github.com/yash3004/user_management_service/internal/models"
 	"github.com/yash3004/user_management_service/internal/schemas"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -22,7 +24,10 @@ type UserManager interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	ChangePassword(ctx context.Context, id uuid.UUID, currentPassword, newPassword string) error
 	AssignRole(ctx context.Context, userID, roleID uuid.UUID) error
+	CreateOrUpdateOAuthUser(ctx context.Context, userInfo *oauth.UserInfo, projectID uuid.UUID, roleID uuid.UUID) (*models.DisplayUser, error)
+	GenerateToken(ctx context.Context, userID uuid.UUID) (string, time.Time, error)
 }
+
 
 // Manager implements the UserManager interface
 type Manager struct {
@@ -35,6 +40,7 @@ func NewManager(db *gorm.DB) UserManager {
 		DB: db,
 	}
 }
+
 
 // CreateUser creates a new user
 func (m *Manager) CreateUser(ctx context.Context, email, password, firstName, lastName string, roleID, projectID uuid.UUID) (*schemas.User, error) {

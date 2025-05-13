@@ -68,9 +68,22 @@ func (m *Manager) CreateProject(ctx context.Context, name, description, uniqueID
 
 	// Create project-specific user table
 	tableName := "project_" + uniqueID + "_users"
-	if err := tx.Table(tableName).Migrator().CreateTable(&schemas.User{}); err != nil {
+	if err := tx.Table(tableName).Migrator().CreateTable(&schemas.ProjectUser{}); err != nil {
 		tx.Rollback()
 		klog.Errorf("Failed to create project user table: %v", err)
+		return nil, errors.New("failed to create project resources")
+	}
+	
+	// Add indexes to the project-specific user table
+	if err := tx.Table(tableName).Migrator().CreateIndex(&schemas.ProjectUser{}, "Email"); err != nil {
+		tx.Rollback()
+		klog.Errorf("Failed to create email index on project user table: %v", err)
+		return nil, errors.New("failed to create project resources")
+	}
+	
+	if err := tx.Table(tableName).Migrator().CreateIndex(&schemas.ProjectUser{}, "OAuthID"); err != nil {
+		tx.Rollback()
+		klog.Errorf("Failed to create oauth_id index on project user table: %v", err)
 		return nil, errors.New("failed to create project resources")
 	}
 
@@ -158,7 +171,7 @@ func (m *Manager) DeleteProject(ctx context.Context, id uuid.UUID) error {
 
 	// Drop the project-specific user table
 	tableName := "project_" + project.UniqueID + "_users"
-	if err := tx.Table(tableName).Migrator().DropTable(&schemas.User{}); err != nil {
+	if err := tx.Table(tableName).Migrator().DropTable(&schemas.ProjectUser{}); err != nil {
 		tx.Rollback()
 		klog.Errorf("Failed to drop project user table: %v", err)
 		return errors.New("failed to delete project resources")
