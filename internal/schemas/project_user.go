@@ -10,8 +10,8 @@ import (
 // ProjectUser represents a user specific to a project
 type ProjectUser struct {
 	ID        uuid.UUID `gorm:"type:char(36);primary_key"`
-	Email     string    `gorm:"uniqueIndex"`
-	Password  string    `gorm:"size:255"` // Hashed password for local auth
+	Email     string    `gorm:"size:255;not null;"` // Unique email for the user
+	Password  string    `gorm:"size:255"`           // Hashed password for local auth
 	FirstName string    `gorm:"size:100"`
 	LastName  string    `gorm:"size:100"`
 	Active    bool      `gorm:"default:true"`

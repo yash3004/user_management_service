@@ -98,7 +98,7 @@ func httpHandler(ep *endpointManagers) http.Handler {
 	http_transport.AddUserRoutes(userRouter, ep.UserManager)
 
 	// Project-specific user routes
-	projectUserRouter := apiRouter.PathPrefix("/projects/{project_id}/users").Subrouter()
+	projectUserRouter := apiRouter.PathPrefix("/{projectId}/users").Subrouter()
 	http_transport.AddProjectUserRoutes(projectUserRouter, ep.ProjectUserManager)
 
 	// Initialize OAuth providers

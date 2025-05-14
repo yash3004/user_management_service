@@ -70,16 +70,17 @@ func (m *ProjectUserManagerImpl) CreateProjectUser(ctx context.Context, projectI
 
 	// Create new user
 	user := schemas.ProjectUser{
-		ID:        uuid.New(),
-		Email:     email,
-		Password:  string(hashedPassword),
-		FirstName: firstName,
-		LastName:  lastName,
-		Active:    true,
-		RoleId:    roleID,
-		ProjectId: projectUUID,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:          uuid.New(),
+		Email:       email,
+		Password:    string(hashedPassword),
+		FirstName:   firstName,
+		LastName:    lastName,
+		Active:      true,
+		RoleId:      roleID,
+		ProjectId:   projectUUID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		TokenExpiry: time.Now().Add(24 * time.Hour), // Set token expiry to 24 hours
 	}
 
 	if err := m.DB.Table(tableName).Create(&user).Error; err != nil {

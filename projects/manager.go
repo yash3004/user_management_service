@@ -67,27 +67,13 @@ func (m *Manager) CreateProject(ctx context.Context, name, description, uniqueID
 	}
 
 	// Create project-specific user table
-	tableName := "project_" + uniqueID + "_users"
+	tableName := "project_" + project.ID.String() + "_users"
 	if err := tx.Table(tableName).Migrator().CreateTable(&schemas.ProjectUser{}); err != nil {
 		tx.Rollback()
 		klog.Errorf("Failed to create project user table: %v", err)
 		return nil, errors.New("failed to create project resources")
 	}
-	
-	// Add indexes to the project-specific user table
-	if err := tx.Table(tableName).Migrator().CreateIndex(&schemas.ProjectUser{}, "Email"); err != nil {
-		tx.Rollback()
-		klog.Errorf("Failed to create email index on project user table: %v", err)
-		return nil, errors.New("failed to create project resources")
-	}
-	
-	if err := tx.Table(tableName).Migrator().CreateIndex(&schemas.ProjectUser{}, "OAuthID"); err != nil {
-		tx.Rollback()
-		klog.Errorf("Failed to create oauth_id index on project user table: %v", err)
-		return nil, errors.New("failed to create project resources")
-	}
 
-	// Commit the transaction
 	if err := tx.Commit().Error; err != nil {
 		klog.Errorf("Failed to commit transaction: %v", err)
 		return nil, errors.New("failed to create project")
