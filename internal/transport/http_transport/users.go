@@ -129,6 +129,15 @@ func GetProjectIDFromRequest(r *http.Request) (string, error) {
 	return projectID, nil
 }
 
+func GetRoleIdFromRequest(r *http.Request) (string, error) {
+	vars := mux.Vars(r)
+	roleID, ok := vars["roleId"]
+	if !ok {
+		return "", ErrBadRouting
+	}
+	return roleID, nil
+}
+
 func decodeChangePasswordRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
@@ -145,7 +154,6 @@ func decodeChangePasswordRequest(_ context.Context, r *http.Request) (interface{
 
 	return req, nil
 }
-
 
 // generateSecureState generates a secure random state string
 func generateSecureState() string {

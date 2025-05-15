@@ -31,7 +31,7 @@ func AddProjectUserRoutes(r *mux.Router, ep *endpoints.ProjectUsersEndpoint) {
 	))
 
 	// POST - Create a new user in a project
-	r.Methods("POST").Path("").Handler(kithttp.NewServer(
+	r.Methods("POST").Path("/{roleId}").Handler(kithttp.NewServer(
 		ep.CreateProjectUser,
 		decodeCreateProjectUserRequest,
 		encodeResponse,
@@ -96,6 +96,12 @@ func decodeCreateProjectUserRequest(_ context.Context, r *http.Request) (interfa
 		return nil, err
 	}
 
+	roleId, err := GetRoleIdFromRequest(r)
+	if err != nil {
+		klog.Errorf("Error getting role ID from request: %v", err)
+		return nil, err
+	}
+
 	var req endpoints.CreateProjectUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		klog.Errorf("Error decoding request body: %v", err)
@@ -103,6 +109,7 @@ func decodeCreateProjectUserRequest(_ context.Context, r *http.Request) (interfa
 	}
 
 	req.ProjectID = projectID
+	req.RoleID = roleId
 	return req, nil
 }
 

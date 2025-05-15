@@ -95,7 +95,7 @@ func createEndpointManagers(managers *allManager.Managers, cfg cmd.Config) *endp
 		PolicyManager:      endpoints.NewPoliciesEndpoint(managers.PolicyManager),
 		UserManager:        endpoints.NewUsersEndpoint(managers.UserManager),
 		ProjectUserManager: endpoints.NewProjectUsersEndpoint(managers.ProjectUserManager),
-		OAuthManager:       endpoints.NewOAuthEndpoint(managers.UserManager, providerFactory),
+		OAuthManager:       endpoints.NewOAuthEndpoint(managers.ProjectUserManager, providerFactory),
 		// Initialize other endpoint managers as needed
 	}
 }
@@ -117,7 +117,7 @@ func httpHandler(ep *endpointManagers) http.Handler {
 	projectUserRouter := apiRouter.PathPrefix("/{projectId}/users").Subrouter()
 	http_transport.AddProjectUserRoutes(projectUserRouter, ep.ProjectUserManager)
 
-	oauthRouter := apiRouter.PathPrefix("/oauth_user").Subrouter()
+	oauthRouter := apiRouter.PathPrefix("/oauth_users").Subrouter()
 	http_transport.AddOAuthRoutes(oauthRouter, ep.OAuthManager)
 
 	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

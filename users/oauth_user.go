@@ -87,17 +87,3 @@ func (m *Manager) CreateOrUpdateOAuthUser(ctx context.Context, userInfo *oauth.U
 	}, nil
 }
 
-// GenerateToken generates a JWT token for the user
-func (m *Manager) GenerateToken(ctx context.Context, userID uuid.UUID) (string, time.Time, error) {
-	// Check if user exists
-	var user schemas.User
-	if err := m.DB.First(&user, "id = ?", userID).Error; err != nil {
-		klog.Errorf("User not found: %v", err)
-		return "", time.Time{}, errors.New("user not found")
-	}
-
-	// In a real implementation, this would generate a JWT token
-	// For now, just return a placeholder
-	expiresAt := time.Now().Add(24 * time.Hour)
-	return "jwt-token-placeholder", expiresAt, nil
-}

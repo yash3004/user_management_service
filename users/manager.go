@@ -25,9 +25,7 @@ type UserManager interface {
 	ChangePassword(ctx context.Context, id uuid.UUID, currentPassword, newPassword string) error
 	AssignRole(ctx context.Context, userID, roleID uuid.UUID) error
 	CreateOrUpdateOAuthUser(ctx context.Context, userInfo *oauth.UserInfo, projectID uuid.UUID, roleID uuid.UUID) (*models.DisplayUser, error)
-	GenerateToken(ctx context.Context, userID uuid.UUID) (string, time.Time, error)
 }
-
 
 // Manager implements the UserManager interface
 type Manager struct {
@@ -40,7 +38,6 @@ func NewManager(db *gorm.DB) UserManager {
 		DB: db,
 	}
 }
-
 
 // CreateUser creates a new user
 func (m *Manager) CreateUser(ctx context.Context, email, password, firstName, lastName string, roleID, projectID uuid.UUID) (*schemas.User, error) {

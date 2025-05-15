@@ -8,13 +8,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/yash3004/user_management_service/auth/oauth"
 	"github.com/yash3004/user_management_service/internal/models"
-	"github.com/yash3004/user_management_service/users"
+	projectusers "github.com/yash3004/user_management_service/project_users"
 )
 
 // OAuthLoginRequest represents the OAuth login request
 type OAuthLoginRequest struct {
 	Provider  string `json:"provider"`
 	ProjectID string `json:"project_id"`
+	RoleID    string `json:"role_id"`
 	State     string `json:"state"`
 }
 
@@ -41,13 +42,13 @@ type OAuthCallbackResponse struct {
 
 // OAuthEndpoint handles OAuth-related endpoints
 type OAuthEndpoint struct {
-	UserManager     users.UserManager
+	ProjectUser     projectusers.ProjectUserManager
 	ProviderFactory *oauth.ProviderFactory
 }
 
-func NewOAuthEndpoint(userManager users.UserManager, providerFactory *oauth.ProviderFactory) *OAuthEndpoint {
+func NewOAuthEndpoint(userManager projectusers.ProjectUserManager, providerFactory *oauth.ProviderFactory) *OAuthEndpoint {
 	return &OAuthEndpoint{
-		UserManager:     userManager,
+		ProjectUser:     userManager,
 		ProviderFactory: providerFactory,
 	}
 }
@@ -93,18 +94,14 @@ func (e *OAuthEndpoint) Callback(ctx context.Context, request interface{}) (inte
 		return nil, errors.New("failed to get user info")
 	}
 
-	projectID, err := uuid.Parse(req.ProjectID)
-
-	if err != nil {
-		return nil, errors.New("invalid project ID format")
-	}
+	projectID := req.ProjectID
 	roleID, err := uuid.Parse(req.RoleID)
 	if err != nil {
 		return nil, errors.New("invalid role ID format")
 	}
 
 	// Create or update the user in our system
-	user, err := e.UserManager.CreateOrUpdateOAuthUser(ctx, userInfo, projectID, roleID)
+	user, err := e.ProjectUser.CreateOrUpdateOAuthProjectUser(ctx, projectID, userInfo, roleID)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +112,7 @@ func (e *OAuthEndpoint) Callback(ctx context.Context, request interface{}) (inte
 		return nil, errors.New("invalid user ID format")
 	}
 
-	jwtToken, expiresAt, err := e.UserManager.GenerateToken(ctx, userID)
+	jwtToken, expiresAt, err := e.ProjectUser.GenerateToken(ctx, projectID, userID)
 	if err != nil {
 		return nil, err
 	}

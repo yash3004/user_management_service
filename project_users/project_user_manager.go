@@ -24,6 +24,7 @@ type ProjectUserManager interface {
 	UpdateProjectUser(ctx context.Context, projectID string, userID uuid.UUID, firstName, lastName string, active bool) (*models.DisplayUser, error)
 	DeleteProjectUser(ctx context.Context, projectID string, userID uuid.UUID) error
 	CreateOrUpdateOAuthProjectUser(ctx context.Context, projectID string, userInfo *oauth.UserInfo, roleID uuid.UUID) (*models.DisplayUser, error)
+	GenerateToken(ctx context.Context, projectID string, userID uuid.UUID) (string, time.Time, error)
 }
 
 // ProjectUserManagerImpl implements the ProjectUserManager interface
@@ -282,17 +283,18 @@ func (m *ProjectUserManagerImpl) CreateOrUpdateOAuthProjectUser(ctx context.Cont
 
 	// Create new user
 	newUser := schemas.ProjectUser{
-		ID:        uuid.New(),
-		Email:     userInfo.Email,
-		FirstName: userInfo.FirstName,
-		LastName:  userInfo.LastName,
-		Active:    true,
-		OAuthID:   userInfo.ID,
-		OAuthType: userInfo.Provider,
-		RoleId:    roleID,
-		ProjectId: projectUUID,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:          uuid.New(),
+		Email:       userInfo.Email,
+		FirstName:   userInfo.FirstName,
+		LastName:    userInfo.LastName,
+		Active:      true,
+		OAuthID:     userInfo.ID,
+		OAuthType:   userInfo.Provider,
+		RoleId:      roleID,
+		ProjectId:   projectUUID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		TokenExpiry: time.Now().Add(24 * time.Hour), // Set token expiry to 24 hours
 	}
 
 	if err := m.DB.Table(tableName).Create(&newUser).Error; err != nil {
@@ -312,4 +314,18 @@ func (m *ProjectUserManagerImpl) CreateOrUpdateOAuthProjectUser(ctx context.Cont
 		CreatedAt: newUser.CreatedAt,
 		UpdatedAt: newUser.UpdatedAt,
 	}, nil
+}
+
+func (m *ProjectUserManagerImpl) GenerateToken(ctx context.Context, projectId string, userID uuid.UUID) (string, time.Time, error) {
+	// Check if user exists
+	var user schemas.User
+	projectTable := getProjectUserTableName(projectId)
+	if err := m.DB.Table(projectTable).First(&user, "id = ?", userID).Error; err != nil {
+		klog.Errorf("User not found: %v", err)
+		return "", time.Time{}, errors.New("user not found")
+	}
+
+	// For now, just return a placeholder
+	expiresAt := time.Now().Add(24 * time.Hour)
+	return "jwt-token-placeholder", expiresAt, nil
 }

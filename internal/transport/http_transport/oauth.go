@@ -17,11 +17,12 @@ import (
 // OAuthState represents the data structure to be encoded in the OAuth state parameter
 type OAuthState struct {
 	ProjectID string `json:"project_id"`
+	RoleId    string `json:"role_id"`
 	Nonce     string `json:"nonce"` // For CSRF protection
 }
 
 func AddOAuthRoutes(r *mux.Router, ep *endpoints.OAuthEndpoint) {
-	r.Methods("GET").Path("/{projectId}/login/{provider}").Handler(kithttp.NewServer(
+	r.Methods("GET").Path("/{projectId}/{roleId}/login/{provider}").Handler(kithttp.NewServer(
 		ep.Login,
 		decodeOAuthLoginRequest,
 		encodeResponse,
@@ -46,7 +47,7 @@ func generateNonce(length int) (string, error) {
 }
 
 // encodeOAuthState encodes project ID and other data into a secure state string
-func encodeOAuthState(projectID string) (string, error) {
+func encodeOAuthState(projectID string, RoleId string) (string, error) {
 	// Generate a random nonce for CSRF protection
 	nonce, err := generateNonce(16)
 	if err != nil {
@@ -56,6 +57,7 @@ func encodeOAuthState(projectID string) (string, error) {
 	// Create state object with project ID and nonce
 	stateObj := OAuthState{
 		ProjectID: projectID,
+		RoleId:    RoleId,
 		Nonce:     nonce,
 	}
 
@@ -99,9 +101,14 @@ func decodeOAuthLoginRequest(_ context.Context, r *http.Request) (interface{}, e
 		klog.Errorf("Error getting project ID from request: %v", err)
 		return nil, err
 	}
+	roleID, err := GetRoleIdFromRequest(r)
+	if err != nil {
+		klog.Errorf("Error getting role ID from request: %v", err)
+		return nil, err
+	}
 
 	// Encode project ID into state parameter
-	state, err := encodeOAuthState(projectID)
+	state, err := encodeOAuthState(projectID, roleID)
 	if err != nil {
 		klog.Errorf("Error encoding OAuth state: %v", err)
 		return nil, err
@@ -111,10 +118,10 @@ func decodeOAuthLoginRequest(_ context.Context, r *http.Request) (interface{}, e
 		Provider:  provider,
 		ProjectID: projectID,
 		State:     state,
+		RoleID:    roleID,
 	}, nil
 }
 
-// decodeOAuthCallbackRequest decodes the OAuth callback request
 func decodeOAuthCallbackRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	provider, ok := vars["provider"]
@@ -148,6 +155,7 @@ func decodeOAuthCallbackRequest(_ context.Context, r *http.Request) (interface{}
 		ProjectID: projectID,
 		Code:      code,
 		State:     state, // Pass original state for verification if needed
+		RoleID:    stateObj.RoleId,
 	}, nil
 }
 
