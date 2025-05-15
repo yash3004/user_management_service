@@ -50,7 +50,6 @@ func NewProviderFactory(configs map[string]ProviderConfig) *ProviderFactory {
 			factory.providers[name] = NewGoogleProvider(config)
 		case "github":
 			factory.providers[name] = NewGithubProvider(config)
-			// Add more providers as needed
 		}
 	}
 
