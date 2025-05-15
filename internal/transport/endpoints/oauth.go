@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/yash3004/user_management_service/auth/oauth"
 	"github.com/yash3004/user_management_service/internal/models"
+	"github.com/yash3004/user_management_service/users"
 )
 
 // OAuthLoginRequest represents the OAuth login request
@@ -28,6 +29,7 @@ type OAuthCallbackRequest struct {
 	ProjectID string `json:"project_id"`
 	Code      string `json:"code"`
 	State     string `json:"state"`
+	RoleID    string `json:"role_id"`
 }
 
 // OAuthCallbackResponse represents the OAuth callback response
@@ -39,18 +41,11 @@ type OAuthCallbackResponse struct {
 
 // OAuthEndpoint handles OAuth-related endpoints
 type OAuthEndpoint struct {
-	UserManager     UserManager
+	UserManager     users.UserManager
 	ProviderFactory *oauth.ProviderFactory
 }
 
-// UserManager interface for OAuth operations
-type UserManager interface {
-	CreateOrUpdateOAuthUser(ctx context.Context, userInfo *oauth.UserInfo, projectID uuid.UUID) (*models.DisplayUser, error)
-	GenerateToken(ctx context.Context, userID uuid.UUID) (string, time.Time, error)
-}
-
-// NewOAuthEndpoint creates a new OAuth endpoint
-func NewOAuthEndpoint(userManager UserManager, providerFactory *oauth.ProviderFactory) *OAuthEndpoint {
+func NewOAuthEndpoint(userManager users.UserManager, providerFactory *oauth.ProviderFactory) *OAuthEndpoint {
 	return &OAuthEndpoint{
 		UserManager:     userManager,
 		ProviderFactory: providerFactory,
@@ -76,7 +71,6 @@ func (e *OAuthEndpoint) Login(ctx context.Context, request interface{}) (interfa
 	}, nil
 }
 
-// Callback handles the OAuth callback
 func (e *OAuthEndpoint) Callback(ctx context.Context, request interface{}) (interface{}, error) {
 	req, ok := request.(OAuthCallbackRequest)
 	if !ok {
@@ -94,20 +88,23 @@ func (e *OAuthEndpoint) Callback(ctx context.Context, request interface{}) (inte
 		return nil, errors.New("failed to exchange code for token")
 	}
 
-	// Get user info from the provider
 	userInfo, err := provider.GetUserInfo(ctx, token)
 	if err != nil {
 		return nil, errors.New("failed to get user info")
 	}
 
-	// Parse project ID
 	projectID, err := uuid.Parse(req.ProjectID)
+
 	if err != nil {
 		return nil, errors.New("invalid project ID format")
 	}
+	roleID, err := uuid.Parse(req.RoleID)
+	if err != nil {
+		return nil, errors.New("invalid role ID format")
+	}
 
 	// Create or update the user in our system
-	user, err := e.UserManager.CreateOrUpdateOAuthUser(ctx, userInfo, projectID)
+	user, err := e.UserManager.CreateOrUpdateOAuthUser(ctx, userInfo, projectID, roleID)
 	if err != nil {
 		return nil, err
 	}

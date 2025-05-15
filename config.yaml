@@ -19,9 +19,9 @@ auth:
 
 oauth:
   google:
-    client_id: your-google-client-id
-    client_secret: your-google-client-secret
-    redirect_url: http://localhost:8080/api/users/oauth/callback/google
+    client_id: 801737425504-t4io06ke1m0fjggfhn1bsfqd5vgg8l1d.apps.googleusercontent.com
+    client_secret: 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
+    redirect_url: http://localhost:8080/api/oauth_users/callback/google
     scopes:
       - https://www.googleapis.com/auth/userinfo.email
       - https://www.googleapis.com/auth/userinfo.profile

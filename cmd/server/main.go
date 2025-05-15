@@ -22,6 +22,7 @@ type endpointManagers struct {
 	PolicyManager      *endpoints.PoliciesEndpoint
 	UserManager        *endpoints.UsersEndpoint
 	ProjectUserManager *endpoints.ProjectUsersEndpoint
+	OAuthManager       *endpoints.OAuthEndpoint
 }
 
 func main() {
@@ -49,7 +50,7 @@ func main() {
 	managers := allManager.NewManagers(gormDB)
 
 	// Create endpoint managers
-	endpointMgrs := createEndpointManagers(managers)
+	endpointMgrs := createEndpointManagers(managers, cfg)
 
 	// Create HTTP handler without authentication
 	handler := httpHandler(endpointMgrs)
@@ -68,7 +69,25 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
-func createEndpointManagers(managers *allManager.Managers) *endpointManagers {
+func createEndpointManagers(managers *allManager.Managers, cfg cmd.Config) *endpointManagers {
+	OauthCfg := cfg.OAuth
+	// Initialize OAuth providers
+	providerConfigs := map[string]oauth.ProviderConfig{
+		"google": {
+			ClientID:     OauthCfg.Google.ClientID,
+			ClientSecret: OauthCfg.Google.ClientSecret,
+			RedirectURL:  OauthCfg.Google.RedirectURL,
+			Scopes:       OauthCfg.Google.Scopes,
+		},
+		"facebook": {
+			ClientID:     OauthCfg.Facebook.ClientID,
+			ClientSecret: OauthCfg.Facebook.ClientSecret,
+			RedirectURL:  OauthCfg.Facebook.RedirectURL,
+			Scopes:       OauthCfg.Facebook.Scopes,
+		},
+	}
+
+	providerFactory := oauth.NewProviderFactory(providerConfigs)
 
 	return &endpointManagers{
 		ProjectManager:     endpoints.NewProjectsEndpoint(managers.ProjectManager),
@@ -76,6 +95,8 @@ func createEndpointManagers(managers *allManager.Managers) *endpointManagers {
 		PolicyManager:      endpoints.NewPoliciesEndpoint(managers.PolicyManager),
 		UserManager:        endpoints.NewUsersEndpoint(managers.UserManager),
 		ProjectUserManager: endpoints.NewProjectUsersEndpoint(managers.ProjectUserManager),
+		OAuthManager:       endpoints.NewOAuthEndpoint(managers.UserManager, providerFactory),
+		// Initialize other endpoint managers as needed
 	}
 }
 
@@ -93,53 +114,30 @@ func httpHandler(ep *endpointManagers) http.Handler {
 	policiesRouter := apiRouter.PathPrefix("/policies").Subrouter()
 	http_transport.AddPolicyRoutes(policiesRouter, ep.PolicyManager)
 
-	// Global user routes
-	userRouter := apiRouter.PathPrefix("/users").Subrouter()
-	http_transport.AddUserRoutes(userRouter, ep.UserManager)
-
-	// Project-specific user routes
 	projectUserRouter := apiRouter.PathPrefix("/{projectId}/users").Subrouter()
 	http_transport.AddProjectUserRoutes(projectUserRouter, ep.ProjectUserManager)
 
-	// Initialize OAuth providers
-	initOAuthProviders()
+	oauthRouter := apiRouter.PathPrefix("/oauth_user").Subrouter()
+	http_transport.AddOAuthRoutes(oauthRouter, ep.OAuthManager)
 
-	return r
-}
+	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		path, err := route.GetPathTemplate()
+		if err != nil {
+			return nil
+		}
 
-// initOAuthProviders initializes the OAuth providers
-func initOAuthProviders() {
-	// Get configurations from config file
-	cfg := cmd.GetConfigurations()
+		methods, err := route.GetMethods()
+		if err != nil {
+			return nil
+		}
 
-	// Create OAuth provider configurations
-	oauthConfigs := map[string]oauth.ProviderConfig{
-		"google": {
-			ClientID:     cfg.OAuth.Google.ClientID,
-			ClientSecret: cfg.OAuth.Google.ClientSecret,
-			RedirectURL:  cfg.OAuth.Google.RedirectURL,
-			Scopes:       cfg.OAuth.Google.Scopes,
-		},
-		"facebook": {
-			ClientID:     cfg.OAuth.Facebook.ClientID,
-			ClientSecret: cfg.OAuth.Facebook.ClientSecret,
-			RedirectURL:  cfg.OAuth.Facebook.RedirectURL,
-			Scopes:       cfg.OAuth.Facebook.Scopes,
-		},
-		"github": {
-			ClientID:     cfg.OAuth.GitHub.ClientID,
-			ClientSecret: cfg.OAuth.GitHub.ClientSecret,
-			RedirectURL:  cfg.OAuth.GitHub.RedirectURL,
-			Scopes:       cfg.OAuth.GitHub.Scopes,
-		},
-		"microsoft": {
-			ClientID:     cfg.OAuth.Microsoft.ClientID,
-			ClientSecret: cfg.OAuth.Microsoft.ClientSecret,
-			RedirectURL:  cfg.OAuth.Microsoft.RedirectURL,
-			Scopes:       cfg.OAuth.Microsoft.Scopes,
-		},
+		klog.Infof("\t%v %s\n", methods, path)
+
+		return nil
+	})
+	if err != nil {
+		klog.Errorf("cannot print routes: %v", err)
 	}
 
-	// Initialize OAuth providers
-	http_transport.InitOAuthProviders(oauthConfigs)
+	return r
 }
