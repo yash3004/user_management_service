@@ -20,6 +20,7 @@ type User struct {
 	AccessToken  string `gorm:"size:4000"`      // OAuth access token
 	RefreshToken string `gorm:"size:4000"`      // OAuth refresh token
 	TokenExpiry  time.Time
+	ExpirationTime time.Time
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

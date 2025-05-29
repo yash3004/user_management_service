@@ -11,7 +11,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// AddAuthRoutes adds authentication routes to the router
 func AddAuthRoutes(r *mux.Router, db *gorm.DB) {
 	authEndpoint := &endpoints.AuthEndpoint{DB: db}
 
@@ -23,7 +22,6 @@ func AddAuthRoutes(r *mux.Router, db *gorm.DB) {
 	))
 }
 
-// decodeLoginRequest decodes the login request from HTTP request
 func decodeLoginRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var request endpoints.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {

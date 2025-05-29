@@ -8,28 +8,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// Secret key for signing JWT tokens
-// In production, this should be stored securely and not hardcoded
 var jwtSecret = []byte("your-secret-key-change-this-in-production")
 
-// TokenClaims represents the claims in the JWT token
 type TokenClaims struct {
-	UserID uuid.UUID `json:"user_id"`
-	Email  string    `json:"email"`
-	Role   string    `json:"role"`
+	UserID    uuid.UUID `json:"user_id"`
+	Email     string    `json:"email"`
+	RoleId    uuid.UUID `json:"role_id"`
+	ProjectId uuid.UUID `json:"project_id"`
 	jwt.RegisteredClaims
 }
 
-// GenerateToken creates a new JWT token for a user
-func GenerateToken(userID uuid.UUID, email string, role string) (string, error) {
-	// Set token expiration time (e.g., 24 hours)
-	expirationTime := time.Now().Add(24 * time.Hour)
+func GenerateToken(userID uuid.UUID, email string, roleId uuid.UUID, projectId uuid.UUID, expirationTime time.Time) (string, error) {
 
-	// Create claims with user information
 	claims := &TokenClaims{
 		UserID: userID,
 		Email:  email,
-		Role:   role,
+		RoleId: roleId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -39,10 +33,8 @@ func GenerateToken(userID uuid.UUID, email string, role string) (string, error) 
 		},
 	}
 
-	// Create token with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Sign the token with the secret key
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
 		return "", err
@@ -51,11 +43,8 @@ func GenerateToken(userID uuid.UUID, email string, role string) (string, error) 
 	return tokenString, nil
 }
 
-// ValidateToken validates the JWT token and returns the user ID
 func ValidateToken(tokenString string) (uuid.UUID, error) {
-	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		// Validate the signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
@@ -66,12 +55,10 @@ func ValidateToken(tokenString string) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	// Check if the token is valid
 	if !token.Valid {
 		return uuid.Nil, errors.New("invalid token")
 	}
 
-	// Extract claims
 	claims, ok := token.Claims.(*TokenClaims)
 	if !ok {
 		return uuid.Nil, errors.New("invalid token claims")
