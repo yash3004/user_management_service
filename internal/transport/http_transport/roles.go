@@ -11,14 +11,6 @@ import (
 )
 
 func AddRoleRoutes(r *mux.Router, ep *endpoints.RolesEndpoint) {
-	// GET - List all roles
-	r.Methods("GET").Path("").Handler(kithttp.NewServer(
-		ep.ListRoles,
-		decodeListRolesRequest,
-		encodeResponse,
-		defaultServerOptions()...,
-	))
-
 	r.Methods("POST").Path("").Handler(kithttp.NewServer(
 		ep.CreateRole,
 		decodeCreateRoleRequest,
@@ -41,13 +33,6 @@ func AddRoleRoutes(r *mux.Router, ep *endpoints.RolesEndpoint) {
 	))
 }
 
-func decodeListRolesRequest(ctx_ context.Context, r *http.Request) (interface{}, error) {
-	var req endpoints.ListRolesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return req, nil
-}
 
 func decodeUpdateRoleRequest(ctx_ context.Context, r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
