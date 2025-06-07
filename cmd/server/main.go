@@ -65,7 +65,7 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	klog.Infof("Starting server on port %s", port)
+	klog.Infof("Starting server on port %d", port)
 	log.Fatal(srv.ListenAndServe())
 }
 
